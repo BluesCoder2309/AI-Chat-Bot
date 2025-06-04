@@ -1,10 +1,15 @@
 const prompt = document.querySelector("#prompt");
 const chatContainer = document.querySelector(".chat-container");
-
+const imageBtn = document.querySelector("#image");
+const imageInput = document.querySelector("#image input");
 const apiURL =
    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyC89iRKhkWSch1nbNRTUKPRujuKoravK-U";
 let user = {
-   data: null,
+   message: null,
+   file: {
+      mime_type: null,
+      data: null,
+   },
 };
 
 async function generateResponse(aiChatBox) {
@@ -15,11 +20,7 @@ async function generateResponse(aiChatBox) {
       body: JSON.stringify({
          contents: [
             {
-               parts: [
-                  {
-                     text: user.data,
-                  },
-               ],
+               parts: [{ text: user.message }, user.file.data ? [{ inline_data: user.file }] : []],
             },
          ],
       }),
@@ -46,10 +47,10 @@ function createChatBox(html, classes) {
 }
 
 function handleChatResponse(message) {
-   user.data = message; //in the object user the property data is null, but here it is assigned the value of message
+   user.message = message; //in the object user the property data is null, but here it is assigned the value of message
    let html = ` <img src="user.png" alt="" id="userImage" width="50" />
             <div class="user-chat-area">
-                ${user.data}
+                ${user.message}
             </div>`;
    prompt.value = "";
    let userChatBox = createChatBox(html, "user-chat-box");
@@ -72,4 +73,21 @@ prompt.addEventListener("keydown", (e) => {
    if (e.key === "Enter") {
       handleChatResponse(prompt.value);
    }
+});
+
+imageInput.addEventListener("change", () => {
+   const file = imageInput.files[0];
+   if (!file) return;
+   let reader = new FileReader();
+   reader.onload = (e) => {
+      let base64string = e.target.result.split(",")[1];
+      user.file = {
+         mime_type: file.type,
+         data: base64string,
+      };
+   };
+   reader.readAsDataURL(file);
+});
+imageBtn.addEventListener("click", () => {
+   imageInput.click();
 });
